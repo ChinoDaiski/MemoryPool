@@ -11,7 +11,11 @@
 #define GUARD_VALUE 0Xaaaabbbbccccdddd
 
 // Node 구조체 정의
+
+#ifdef _DEBUG
 #pragma pack(1)
+#endif // _DEBUG
+
 template<typename T>
 struct Node
 {
@@ -26,10 +30,14 @@ struct Node
 
 #ifdef _DEBUG
     UINT64 BUFFER_GUARD_END;
-#endif // _DEBUG
 
     UINT64 POOL_INSTANCE_VALUE;
+#endif // _DEBUG
 };
+
+#ifdef _DEBUG
+#pragma pop
+#endif // _DEBUG
 
 // MemoryPool 클래스 정의
 template<typename T, bool bPlacementNew>
@@ -52,7 +60,6 @@ public:
 private:
     Node<T>* m_freeNode;
     UINT32 m_countPool;
-
 };
 
 template<typename T, bool bPlacementNew>
@@ -68,19 +75,19 @@ inline MemoryPool<T, bPlacementNew>::MemoryPool(UINT32 sizeInitialize)
         for (UINT32 i = 0; i < sizeInitialize; i++)
         {
             // 새로운 객체 할당
-            newNode = new Node<T>();
+            newNode = (Node<T>*)malloc(sizeof(Node<T>));
 
 #ifdef _DEBUG
             newNode->BUFFER_GUARD_FRONT = GUARD_VALUE;
             newNode->BUFFER_GUARD_END = GUARD_VALUE;
-#endif // _DEBUG
 
             newNode->POOL_INSTANCE_VALUE = reinterpret_cast<UINT64>(this);
+#endif // _DEBUG
 
             // placement New 옵션이 켜져있다면 생성자 호출
             if constexpr (bPlacementNew)
             {
-                new (&(newNode->data)) T();
+                new (reinterpret_cast<char*>(newNode) + offsetof(Node<T>, data)) T();
             }
 
             // m_freeNode를 다음 노드로 설정 -> 마치 stack을 사용하듯이 사용
@@ -128,7 +135,7 @@ inline T* MemoryPool<T, bPlacementNew>::Alloc(void)
         // placement New 옵션이 켜져있다면 생성자 호출
         if constexpr (bPlacementNew)
         {
-            new (&(returnNode->data)) T();
+            new (reinterpret_cast<char*>(returnNode) + offsetof(Node<T>, data)) T();
         }
 
         // 객체의 T타입 데이터 반환
@@ -138,22 +145,22 @@ inline T* MemoryPool<T, bPlacementNew>::Alloc(void)
     // m_freeNode가 nullptr이라면 풀에 객체가 존재하지 않는다는 의미이므로 새로운 객체 할당
 
     // 새 노드 할당
-    Node<T>* newNode = new Node<T>();
+    Node<T>* newNode = (Node<T>*)malloc(sizeof(Node<T>));
 
 #ifdef _DEBUG
     // 디버깅용 가드. 가드 값도 확인하고, 반환되는 풀의 정보가 올바른지 확인하기 위해 사용
     newNode->BUFFER_GUARD_FRONT = GUARD_VALUE;
     newNode->BUFFER_GUARD_END = GUARD_VALUE;
-#endif // _DEBUG
 
     newNode->POOL_INSTANCE_VALUE = reinterpret_cast<UINT64>(this);
+#endif // _DEBUG
 
     newNode->next = nullptr;    // 정확힌 m_freeNode를 대입해도 된다. 근데 이 자체가 nullptr이니 보기 쉽게 nullptr 넣음.
 
     // placement New 옵션이 켜져있다면 생성자 호출
     if constexpr (bPlacementNew)
     {
-        new (&(newNode->data)) T();
+        new (reinterpret_cast<char*>(returnNode) + offsetof(Node<T>, data)) T();
     }
 
     // 풀 갯수를 1 증가
@@ -166,12 +173,14 @@ inline T* MemoryPool<T, bPlacementNew>::Alloc(void)
 template<typename T, bool bPlacementNew>
 inline bool MemoryPool<T, bPlacementNew>::Free(T* ptr)
 {
+#ifdef _DEBUG
     // 반환하는 값이 존재하지 않는다면
     if (ptr == nullptr)
     {
         // 실패
         return false;
     }
+#endif // _DEBUG
 
     // offsetof(Node<T>, data)) => Node 구조체의 data 변수와 Node 구조체와의 주소 차이값을 계산
     // 여기선 debug 모드일때 가드가 있으므로 4, release일 경우 0으로 처리
@@ -187,7 +196,6 @@ inline bool MemoryPool<T, bPlacementNew>::Free(T* ptr)
         // 만약 다르다면 false 반환
         return false;
     }
-#endif // _DEBUG
 
     //  풀 반환이 올바른지 검사
     if (pNode->POOL_INSTANCE_VALUE != reinterpret_cast<UINT64>(this))
@@ -198,6 +206,7 @@ inline bool MemoryPool<T, bPlacementNew>::Free(T* ptr)
         // 만약 다르다면 false 반환
         return false;
     }
+#endif // _DEBUG
 
     // 만약 placement new 옵션이 켜져 있다면, 생성을 placement new로 했을 것이므로 해당 객체의 소멸자를 수동으로 불러줌
     if constexpr (bPlacementNew)

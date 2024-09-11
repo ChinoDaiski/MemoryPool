@@ -36,6 +36,7 @@ private:
 
 // 프로파일링용 구조체
 #define THRESHOLD 10
+
 typedef struct _tagProfileData {
     std::wstring name;
     double totalTime = 0;

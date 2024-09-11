@@ -89,7 +89,8 @@ inline MemoryPool<T, bPlacementNew>::MemoryPool(UINT32 sizeInitialize)
             // placement New 옵션이 켜져있다면 생성자 호출
             if constexpr (bPlacementNew)
             {
-                new (reinterpret_cast<char*>(newNode) + offsetof(Node<T>, data)) T();
+                //new (reinterpret_cast<char*>(newNode) + offsetof(Node<T>, data)) T();
+                new (&(returnNode->data)) T();
             }
 
             // m_freeNode를 다음 노드로 설정 -> 마치 stack을 사용하듯이 사용
@@ -134,32 +135,11 @@ inline T* MemoryPool<T, bPlacementNew>::Alloc(void)
         returnNode = m_freeNode;            // top
         m_freeNode = m_freeNode->next;      // pop
 
-
-//#define AAA
-//#ifdef AAA
-//        T* A = reinterpret_cast<T*>(reinterpret_cast<char*>(returnNode) + offsetof(Node<T>, data));
-//        /*
-//            00B81A2A 8B 4D F8             mov         ecx,dword ptr [returnNode]  
-//            00B81A2D 89 4D E8             mov         dword ptr [ebp-18h],ecx 
-//        */
-//#endif
-//#ifndef AAA
-//        T* A = new (&(returnNode->data)) T();
-//        /*
-//            00B01A2A 8B 4D F8             mov         ecx,dword ptr [returnNode]  
-//            00B01A2D 89 4D F0             mov         dword ptr [ebp-10h],ecx  
-//            00B01A30 8B 55 F0             mov         edx,dword ptr [ebp-10h]  
-//            00B01A33 C7 02 00 00 00 00    mov         dword ptr [edx],0  
-//            00B01A39 8B 45 F0             mov         eax,dword ptr [ebp-10h]  
-//            00B01A3C 89 45 E4             mov         dword ptr [ebp-1Ch],eax 
-//        */
-//#endif // !AAA
-
-
         // placement New 옵션이 켜져있다면 생성자 호출
         if constexpr (bPlacementNew)
         {
-            new (reinterpret_cast<char*>(returnNode) + offsetof(Node<T>, data)) T();
+            //new (reinterpret_cast<char*>(returnNode) + offsetof(Node<T>, data)) T();
+            new (&(returnNode->data)) T();
         }
 
         // 객체의 T타입 데이터 반환
@@ -184,7 +164,8 @@ inline T* MemoryPool<T, bPlacementNew>::Alloc(void)
     // placement New 옵션이 켜져있다면 생성자 호출
     if constexpr (bPlacementNew)
     {
-        new (reinterpret_cast<char*>(newNode) + offsetof(Node<T>, data)) T();
+        //new (reinterpret_cast<char*>(newNode) + offsetof(Node<T>, data)) T();
+        new (&(returnNode->data)) T();
     }
 
     // 풀 갯수를 1 증가

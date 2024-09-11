@@ -21,18 +21,20 @@ struct Node
 {
     // x64 환경에서 빌드될것을 고려해서 UINT64 형을 사용
 #ifdef _DEBUG
+
     UINT64 BUFFER_GUARD_FRONT;
+    T data;
+    UINT64 BUFFER_GUARD_END;
+    UINT64 POOL_INSTANCE_VALUE;
+    Node* next;
+
 #endif // _DEBUG
+#ifndef _DEBUG
 
     T data;
-
-#ifdef _DEBUG
-    UINT64 BUFFER_GUARD_END;
-
-    UINT64 POOL_INSTANCE_VALUE;
-#endif // _DEBUG
-
     Node* next;
+
+#endif // !_DEBUG
 };
 
 #ifdef _DEBUG
@@ -167,7 +169,7 @@ inline T* MemoryPool<T, bPlacementNew>::Alloc(void)
     m_countPool++;
 
     // 객체의 T타입 데이터 반환
-    return &newNode->data;
+    return reinterpret_cast<T*>(reinterpret_cast<char*>(newNode) + offsetof(Node<T>, data));
 }
 
 template<typename T, bool bPlacementNew>

@@ -8,7 +8,7 @@
 
 #include "Profile.h"
 
-#define GUARD_VALUE 0Xaaaabbbbccccdddd
+#define GUARD_VALUE 0xAAAABBBBCCCCDDDD
 
 // Node 구조체 정의
 
@@ -25,7 +25,7 @@ struct Node
     UINT64 BUFFER_GUARD_FRONT;
     T data;
     UINT64 BUFFER_GUARD_END;
-    UINT64 POOL_INSTANCE_VALUE;
+    ULONG_PTR POOL_INSTANCE_VALUE;
     Node* next;
 
 #endif // _DEBUG
@@ -83,7 +83,7 @@ inline MemoryPool<T, bPlacementNew>::MemoryPool(UINT32 sizeInitialize)
             newNode->BUFFER_GUARD_FRONT = GUARD_VALUE;
             newNode->BUFFER_GUARD_END = GUARD_VALUE;
 
-            newNode->POOL_INSTANCE_VALUE = reinterpret_cast<UINT64>(this);
+            newNode->POOL_INSTANCE_VALUE = reinterpret_cast<ULONG_PTR>(this);
 #endif // _DEBUG
 
             // placement New 옵션이 켜져있다면 생성자 호출
@@ -134,6 +134,28 @@ inline T* MemoryPool<T, bPlacementNew>::Alloc(void)
         returnNode = m_freeNode;            // top
         m_freeNode = m_freeNode->next;      // pop
 
+
+//#define AAA
+//#ifdef AAA
+//        T* A = reinterpret_cast<T*>(reinterpret_cast<char*>(returnNode) + offsetof(Node<T>, data));
+//        /*
+//            00B81A2A 8B 4D F8             mov         ecx,dword ptr [returnNode]  
+//            00B81A2D 89 4D E8             mov         dword ptr [ebp-18h],ecx 
+//        */
+//#endif
+//#ifndef AAA
+//        T* A = new (&(returnNode->data)) T();
+//        /*
+//            00B01A2A 8B 4D F8             mov         ecx,dword ptr [returnNode]  
+//            00B01A2D 89 4D F0             mov         dword ptr [ebp-10h],ecx  
+//            00B01A30 8B 55 F0             mov         edx,dword ptr [ebp-10h]  
+//            00B01A33 C7 02 00 00 00 00    mov         dword ptr [edx],0  
+//            00B01A39 8B 45 F0             mov         eax,dword ptr [ebp-10h]  
+//            00B01A3C 89 45 E4             mov         dword ptr [ebp-1Ch],eax 
+//        */
+//#endif // !AAA
+
+
         // placement New 옵션이 켜져있다면 생성자 호출
         if constexpr (bPlacementNew)
         {
@@ -154,7 +176,7 @@ inline T* MemoryPool<T, bPlacementNew>::Alloc(void)
     newNode->BUFFER_GUARD_FRONT = GUARD_VALUE;
     newNode->BUFFER_GUARD_END = GUARD_VALUE;
 
-    newNode->POOL_INSTANCE_VALUE = reinterpret_cast<UINT64>(this);
+    newNode->POOL_INSTANCE_VALUE = reinterpret_cast<ULONG_PTR>(this);
 #endif // _DEBUG
 
     newNode->next = nullptr;    // 정확힌 m_freeNode를 대입해도 된다. 근데 이 자체가 nullptr이니 보기 쉽게 nullptr 넣음.
@@ -200,7 +222,7 @@ inline bool MemoryPool<T, bPlacementNew>::Free(T* ptr)
     }
 
     //  풀 반환이 올바른지 검사
-    if (pNode->POOL_INSTANCE_VALUE != reinterpret_cast<UINT64>(this))
+    if (pNode->POOL_INSTANCE_VALUE != reinterpret_cast<ULONG_PTR>(this))
     {
         // 이 시점에서 어떻게 할지... 나중에 결정.
 

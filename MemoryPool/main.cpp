@@ -22,7 +22,7 @@ int main()
 {
     ProfileReset();
 
-    for (UINT8 i = 0; i < 10; ++i)
+    for (UINT8 i = 0; i < 100; ++i)
     {
         const size_t numObjects = 10000;
 
@@ -32,17 +32,12 @@ int main()
 
         //std::cout << "new/delete 테스트\n";
 
-        std::vector<TestObject*> objects;
         {
             Profile pf(L"new/delete");
 
             for (size_t i = 0; i < numObjects; ++i)
             {
-                objects.push_back(new TestObject());
-            }
-
-            for (auto obj : objects)
-            {
+                TestObject* obj = new TestObject();
                 delete obj;
             }
         }
@@ -53,19 +48,16 @@ int main()
 
         //std::cout << "MemoryPool 테스트\n";
 
-        MemoryPool<TestObject, true> memoryPool(numObjects);
-        objects.clear();
+        MemoryPool<TestObject, false> memoryPool(numObjects);
         {
             Profile pf(L"MemoryPool");
 
+            int k = 0;
             for (size_t i = 0; i < numObjects; ++i)
             {
-                objects.push_back(memoryPool.Alloc());
-            }
-
-            for (auto obj : objects)
-            {
+                const auto& obj = memoryPool.Alloc();
                 memoryPool.Free(obj);
+                k = i;
             }
         }
     }

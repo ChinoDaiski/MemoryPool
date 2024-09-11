@@ -11,10 +11,14 @@
 class TestObject
 {
 public:
-    TestObject() {
-        i++;
-    }
+    TestObject() {}
     ~TestObject() {}
+
+public:
+    void Clear(void)
+    {
+        i = 0;
+    }
 
 private:
     volatile int i = 0;
@@ -47,12 +51,13 @@ int main()
 
     //std::cout << "MemoryPool Å×½ºÆ®\n";
 
-    MemoryPool<TestObject, false> memoryPool(numObjects);
+    MemoryPool<TestObject, true> memoryPool(numObjects);
     {
         Profile pf(L"MemoryPool");
         for (size_t i = 0; i < numObjects; ++i)
         {
             TestObject* obj = memoryPool.Alloc();
+            obj->Clear();
             memoryPool.Free(obj);
         }
     }

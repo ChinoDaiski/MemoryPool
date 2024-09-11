@@ -19,8 +19,6 @@
 template<typename T>
 struct Node
 {
-    Node* next;
-
     // x64 환경에서 빌드될것을 고려해서 UINT64 형을 사용
 #ifdef _DEBUG
     UINT64 BUFFER_GUARD_FRONT;
@@ -33,6 +31,8 @@ struct Node
 
     UINT64 POOL_INSTANCE_VALUE;
 #endif // _DEBUG
+
+    Node* next;
 };
 
 #ifdef _DEBUG
@@ -160,7 +160,7 @@ inline T* MemoryPool<T, bPlacementNew>::Alloc(void)
     // placement New 옵션이 켜져있다면 생성자 호출
     if constexpr (bPlacementNew)
     {
-        new (reinterpret_cast<char*>(returnNode) + offsetof(Node<T>, data)) T();
+        new (reinterpret_cast<char*>(newNode) + offsetof(Node<T>, data)) T();
     }
 
     // 풀 갯수를 1 증가

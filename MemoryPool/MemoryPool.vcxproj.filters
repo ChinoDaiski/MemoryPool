@@ -19,6 +19,12 @@
     <Filter Include="헤더 파일\MemoryPool">
       <UniqueIdentifier>{150ae1a6-c1f1-4664-8dca-af58a0251acc}</UniqueIdentifier>
     </Filter>
+    <Filter Include="헤더 파일\Concurrent_Stack">
+      <UniqueIdentifier>{1c6981fe-fc9a-4336-9024-205958ac9798}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="헤더 파일\CircularQueue">
+      <UniqueIdentifier>{f7002e72-ccd4-4236-a96e-56dcec189a29}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -27,6 +33,9 @@
     <ClCompile Include="Profile.cpp">
       <Filter>헤더 파일\Profiler</Filter>
     </ClCompile>
+    <ClCompile Include="CircularQueue.cpp">
+      <Filter>헤더 파일\CircularQueue</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Profile.h">
@@ -34,6 +43,9 @@
     </ClInclude>
     <ClInclude Include="MemoryPool.h">
       <Filter>헤더 파일\MemoryPool</Filter>
+    </ClInclude>
+    <ClInclude Include="CircularQueue.h">
+      <Filter>헤더 파일\CircularQueue</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

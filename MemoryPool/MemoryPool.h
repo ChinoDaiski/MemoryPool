@@ -35,7 +35,7 @@ struct Node
 #ifndef _DEBUG
 
     T data;
-    Node<T>* next;
+    UINT64 next;
 
 #endif // !_DEBUG
 };
@@ -161,7 +161,7 @@ template<typename T, bool bPlacementNew>
 inline MemoryPool<T, bPlacementNew>::~MemoryPool(void)
 {
     Node<T>* currentNode;
-    Node<T>* nextNode = nullptr;
+    UINT64 nextNode;
     UINT64 currentTop;
     UINT64 newTop;
     UINT64 stValue = InterlockedIncrement(&stamp);
@@ -176,9 +176,8 @@ inline MemoryPool<T, bPlacementNew>::~MemoryPool(void)
         }
 
         nextNode = currentNode->next;
-        newTop = AddressConverter<T>::AddStamp(nextNode, stValue);
 
-        if (CAS(&top, currentTop, newTop)) {
+        if (CAS(&top, currentTop, nextNode)) {
             delete currentNode;
             InterlockedDecrement(&m_maxPoolCount);
         }
@@ -196,7 +195,7 @@ template<typename T, bool bPlacementNew>
 inline T* MemoryPool<T, bPlacementNew>::Alloc(void)
 {
     Node<T>* currentNode;
-    Node<T>* nextNode = nullptr;
+    UINT64 nextNode;
     UINT64 currentTop;
     UINT64 newTop;
     UINT64 stValue = InterlockedIncrement(&stamp);
@@ -221,7 +220,8 @@ inline T* MemoryPool<T, bPlacementNew>::Alloc(void)
             newNode->POOL_INSTANCE_VALUE = reinterpret_cast<ULONG_PTR>(this);
 #endif // _DEBUG
 
-            newNode->next = nullptr;    // 정확힌 m_freeNode를 대입해도 된다. 근데 이 자체가 nullptr이니 보기 쉽게 nullptr 넣음.
+            newNode->next = 0;      // 정확힌 m_freeNode를 대입해도 된다. 근데 이 자체가 nullptr이니 보기 쉽게 nullptr 넣음.
+                                    // 이제 0으로 초기화
 
             // placement New 옵션이 켜져있다면 생성자 호출
             if constexpr (bPlacementNew)
@@ -238,9 +238,8 @@ inline T* MemoryPool<T, bPlacementNew>::Alloc(void)
         }
 
         nextNode = currentNode->next;
-        newTop = AddressConverter<T>::AddStamp(nextNode, stValue);
 
-        if (CAS(&top, currentTop, newTop)) {
+        if (CAS(&top, currentTop, nextNode)) {
 
             // placement New 옵션이 켜져있다면 생성자 호출
             if constexpr (bPlacementNew)
@@ -308,13 +307,12 @@ inline bool MemoryPool<T, bPlacementNew>::Free(T* ptr)
     UINT64 currentTop;
     UINT64 newTop;
 
+    newTop = AddressConverter<T>::AddStamp(pNode, stValue);
+
     while (true) {
         currentTop = top;
-        currentNode = AddressConverter<T>::ExtractNode(currentTop);
 
-        pNode->next = currentNode; // 새로운 노드의 next를 현재 top으로 설정
-
-        newTop = AddressConverter<T>::AddStamp(pNode, stValue);
+        pNode->next = currentTop; // 새로운 노드의 next를 현재 top으로 설정
 
         if (CAS(&top, currentTop, newTop)) {
             break; // 성공적으로 Push 완료

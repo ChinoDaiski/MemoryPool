@@ -33,6 +33,9 @@
     <ClCompile Include="CircularQueue.cpp">
       <Filter>헤더 파일\CircularQueue</Filter>
     </ClCompile>
+    <ClCompile Include="benchMark.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Profile.h">

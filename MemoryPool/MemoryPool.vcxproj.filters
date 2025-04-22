@@ -36,6 +36,9 @@
     <ClCompile Include="benchMark.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
+    <ClCompile Include="excelBench.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Profile.h">

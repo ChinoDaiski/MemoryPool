@@ -1,0 +1,22 @@
+Name                     |      Average |    Calls |        Total
+-----------------------------------------------------------------
+0512bytes, 1threads new       |     0.000155 |    10000 |     1.549985
+0512bytes, 1threads delete    |     0.000039 |    10000 |     0.391752
+0512bytes, 1threads pool alloc |     0.000045 |    10000 |     0.448162
+0512bytes, 1threads pool free  |     0.000009 |    10000 |     0.093439
+0512bytes, 2threads new       |     0.000068 |    20000 |     1.361748
+0512bytes, 2threads delete    |     0.000018 |    20000 |     0.369156
+0512bytes, 2threads pool alloc |     0.000045 |    20000 |     0.900245
+0512bytes, 2threads pool free  |     0.000010 |    20000 |     0.192021
+0512bytes, 4threads new       |     0.000069 |    40000 |     2.776719
+0512bytes, 4threads delete    |     0.000019 |    40000 |     0.760582
+0512bytes, 4threads pool alloc |     0.000046 |    40000 |     1.847658
+0512bytes, 4threads pool free  |     0.000010 |    40000 |     0.384789
+0512bytes, 8threads new       |     0.000090 |    80000 |     7.178078
+0512bytes, 8threads delete    |     0.000025 |    80000 |     1.999114
+0512bytes, 8threads pool alloc |     0.000063 |    80000 |     5.014996
+0512bytes, 8threads pool free  |     0.000011 |    80000 |     0.871354
+0512bytes, 16threads new       |     0.000177 |   160000 |    28.275405
+0512bytes, 16threads delete    |     0.000039 |   160000 |     6.307523
+0512bytes, 16threads pool alloc |     0.000277 |   160000 |    44.329646
+0512bytes, 16threads pool free  |     0.000023 |   160000 |     3.738533

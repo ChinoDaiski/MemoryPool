@@ -1,4 +1,4 @@
-
+ï»¿
 #include <iostream>
 #include <thread>
 #include <vector>
@@ -10,69 +10,55 @@
 #include "Profile.h"
 #include <string>
 
-// °£´ÜÇÑ Å×½ºÆ® ±¸Á¶Ã¼
+// ê°„ë‹¨í•œ í…ŒìŠ¤íŠ¸ êµ¬ì¡°ì²´
 struct Foo {
-    int x[2000];
+    int x[512];
 };
 
-// 1) ÀÏ¹İ new/delete º¥Ä¡¸¶Å© ÇÔ¼ö
-typedef void (*TestFunc)(size_t);
+// 1) ì¼ë°˜ new/delete ë²¤ì¹˜ë§ˆí¬ í•¨ìˆ˜
+typedef void (*TestFunc)(size_t, int);
 
-// 2) ±Û·Î¹ú Ç®: lock-free ½ºÅÃ ±â¹İ °£´Ü ±¸Çö
-template<typename T>
-class GlobalPool {
-    struct Node { Node* next; alignas(T) unsigned char storage[sizeof(T)]; };
-    std::atomic<Node*> head{ nullptr };
-public:
-    T* alloc() {
-        Node* n = head.load(std::memory_order_acquire);
-        while (n) {
-            Node* next = n->next;
-            if (head.compare_exchange_weak(n, next,
-                std::memory_order_acq_rel, std::memory_order_acquire)) {
-                return new (&n->storage) T();
-            }
-        }
-        // ½ºÅÃ ºñ¾úÀ¸¸é »õ·Î ÇÒ´ç
-        void* mem = ::operator new(sizeof(Node));
-        return new (mem) T();
+//MemoryPool<Foo, true> tlsPool(200000);                        // ì „ì—­ í’€ ì¸ìŠ¤í„´ìŠ¤
+thread_local tlsMemoryPool<Foo, true> tlsPool(200000);      // TLS í’€: ê° ìŠ¤ë ˆë“œë³„ë¡œ ë…ë¦½ ì¸ìŠ¤í„´ìŠ¤
+
+// 1) new/delete í…ŒìŠ¤íŠ¸
+void testNewDelete(size_t count, int threadCnt) {
+    std::vector<Foo*> v[100];
+
+    for (int i = 0; i < 100; ++i)
+    {
+        v[i].reserve(count);
     }
-    void free(T* p) {
-        p->~T();
-        Node* n = reinterpret_cast<Node*>(
-            reinterpret_cast<char*>(p) - offsetof(Node, storage));
-        Node* old = head.load(std::memory_order_acquire);
-        do {
-            n->next = old;
-        } while (!head.compare_exchange_weak(old, n,
-            std::memory_order_release, std::memory_order_relaxed));
-    }
-};
 
-MemoryPool<Foo, true> gPool;                        // Àü¿ª Ç® ÀÎ½ºÅÏ½º
-thread_local tlsMemoryPool<Foo, true> tlsPool;      // TLS Ç®: °¢ ½º·¹µåº°·Î µ¶¸³ ÀÎ½ºÅÏ½º
-
-
-// 1) new/delete Å×½ºÆ®
-void testNewDelete(size_t count) {
-    std::vector<Foo*> v;
-    v.reserve(count);
+    std::wstring threads = std::to_wstring(threadCnt);
+    threads += {L" threads "};
 
     std::wstring alloc = { L"new" };
     alloc += std::to_wstring(count);
     std::wstring free = { L"delete" };
     free += std::to_wstring(count);
 
+    alloc = threads + alloc;
+    free = threads + free;
+
     auto start = std::chrono::high_resolution_clock::now();
 
-    for (size_t i = 0; i < count; ++i) {
+    for (int k = 0; k < 100; ++k)
+    {
         Profile pf(alloc);
-        v.push_back(new Foo{ int(i) });
+        for (size_t i = 0; i < count; ++i) {
+            v[k].push_back(new Foo{int(i)});
+        }
     }
-    for (Foo* p : v) {
+
+    for (int k = 0; k < 100; ++k)
+    {
         Profile pf(free);
-        delete p;
+        for (Foo* p : v[k]) {
+            delete p;
+        }
     }
+
     auto end = std::chrono::high_resolution_clock::now();
     auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
     std::cout << "[new/delete] " << ms << " ms\n";
@@ -80,69 +66,105 @@ void testNewDelete(size_t count) {
     FlushThreadProfileData();
 }
 
-// 2) ±Û·Î¹ú Ç® Å×½ºÆ®
-void testGlobalPool(size_t count) {
-    std::vector<Foo*> v;
-    v.reserve(count);
+//// 2) ê¸€ë¡œë²Œ í’€ í…ŒìŠ¤íŠ¸
+//void testGlobalPool(size_t count, int threadCnt) {
+//    std::vector<Foo*> v;
+//    v.reserve(count);
+//
+//    for (size_t i = 0; i < count; ++i) {
+//        v.push_back(gPool.Alloc());
+//    }
+//
+//    for (Foo* p : v) {
+//        p->x[0] += 1;
+//    }
+//
+//    for (Foo* p : v) {
+//        gPool.Free(p);
+//    }
+//    v.clear();
+//
+//    std::wstring threads = std::to_wstring(threadCnt);
+//    threads += {L" threads "};
+//
+//    std::wstring alloc = { L"memoryPool Alloc" };
+//    alloc += std::to_wstring(count);
+//    std::wstring free = { L"memoryPool Free" };
+//    free += std::to_wstring(count);
+//
+//    alloc = threads + alloc;
+//    free = threads + free;
+//
+//    auto start = std::chrono::high_resolution_clock::now();
+//
+//    for (size_t i = 0; i < count; ++i) {
+//        Profile pf(alloc);
+//        v.push_back(gPool.Alloc());
+//    }
+//    for (Foo* p : v) {
+//        Profile pf(free);
+//        gPool.Free(p);
+//    }
+//    auto end = std::chrono::high_resolution_clock::now();
+//    auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
+//    std::cout << "[global pool] " << ms << " ms\n";
+//
+//    FlushThreadProfileData();
+//}
 
-    for (size_t i = 0; i < count; ++i) {
-        v.push_back(gPool.Alloc());
+// 3) TLS í’€ í…ŒìŠ¤íŠ¸
+void testTlsPool(size_t count, int threadCnt) {
+    std::vector<Foo*> v[100];
+
+    for (int k = 0; k < 100; ++k)
+    {
+        v[k].reserve(count);
+
+        for (size_t i = 0; i < count; ++i) {
+            v[k].push_back(tlsPool.Alloc());
+        }
+        for (Foo* p : v[k]) {
+            tlsPool.Free(p);
+        }
+        
+        v[k].clear();
     }
-    for (Foo* p : v) {
-        gPool.Free(p);
-    }
-    v.clear();
+
+    std::cout << tlsPool.m_maxPoolCount << "\n";
+
+    std::wstring threads = std::to_wstring(threadCnt);
+    threads += {L" threads "};
+
+    std::wstring alloc = { L"Alloc" };
+    alloc += std::to_wstring(count);
+    std::wstring free = { L"Free" };
+    free += std::to_wstring(count);
+
+    alloc = threads + alloc;
+    free = threads + free;
 
     auto start = std::chrono::high_resolution_clock::now();
 
-    std::wstring alloc = { L"memoryPool Alloc" };
-    alloc += std::to_wstring(count);
-    std::wstring free = { L"memoryPool Free" };
-    free += std::to_wstring(count);
-
-    for (size_t i = 0; i < count; ++i) {
+    for (int k = 0; k < 100; ++k)
+    {
         Profile pf(alloc);
-        v.push_back(gPool.Alloc());
+        for (size_t i = 0; i < count; ++i) {
+            v[k].push_back(tlsPool.Alloc());
+        }
     }
-    for (Foo* p : v) {
-        Profile pf(free);
-        gPool.Free(p);
+
+    for (int k = 0; k < 100; ++k)
+    {
+        {
+            Profile pf(free);
+            for (Foo* p : v[k]) {
+                tlsPool.Free(p);
+            }
+        }
+        v[k].clear();
     }
-    auto end = std::chrono::high_resolution_clock::now();
-    auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
-    std::cout << "[global pool] " << ms << " ms\n";
 
-    FlushThreadProfileData();
-}
 
-// 3) TLS Ç® Å×½ºÆ®
-void testTlsPool(size_t count) {
-    std::vector<Foo*> v;
-    v.reserve(count);
-
-    for (size_t i = 0; i < count; ++i) {
-        v.push_back(tlsPool.Alloc());
-    }
-    for (Foo* p : v) {
-        tlsPool.Free(p);
-    }
-    v.clear();
-
-    auto start = std::chrono::high_resolution_clock::now();
-
-    std::wstring alloc = { L"tlsPool Alloc" };
-    alloc += std::to_wstring(count);
-    std::wstring free = { L"tlsPool Free" };
-    free += std::to_wstring(count);
-
-    for (size_t i = 0; i < count; ++i) {
-        Profile pf(alloc);
-        v.push_back(tlsPool.Alloc());
-    }
-    for (Foo* p : v) {
-        Profile pf(free);
-        tlsPool.Free(p);
-    }
     auto end = std::chrono::high_resolution_clock::now();
     auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
     std::cout << "[tls pool] " << ms << " ms\n";
@@ -150,14 +172,14 @@ void testTlsPool(size_t count) {
     FlushThreadProfileData();
 }
 
-// ¸ÖÆ¼½º·¹µå º¥Ä¡¸¶Å© ÇïÆÛ
+// ë©€í‹°ìŠ¤ë ˆë“œ ë²¤ì¹˜ë§ˆí¬ í—¬í¼
 void runInThreads(TestFunc fn, size_t total, int threads, const char* name) {
     size_t chunk = total / threads;
     auto start = std::chrono::high_resolution_clock::now();
     std::vector<std::thread> ths;
     ths.reserve(threads);
     for (int t = 0; t < threads; ++t) {
-        ths.emplace_back(fn, chunk);
+        ths.emplace_back(fn, chunk, threads);
     }
     for (auto& th : ths) th.join();
     auto end = std::chrono::high_resolution_clock::now();
@@ -168,26 +190,24 @@ void runInThreads(TestFunc fn, size_t total, int threads, const char* name) {
 int main() {
     ProfileReset();
 
-    const size_t count = 500000;
+    const size_t count = 1000;
 
     std::cout << "--- Single-thread benchmark ---\n";
-    testNewDelete(count);
-    testGlobalPool(count);
-    testTlsPool(count);
+    testNewDelete(count, 1);
+    testTlsPool(count, 1);
 
     std::cout << "\n\n--- Multi-thread benchmark ---\n";
     for (int t : {2, 4, 8, 16}) {
         std::cout << "\n--- " << t << " threads ---\n";
-        runInThreads(testNewDelete, count, t, "new/delete");
-        runInThreads(testGlobalPool, count, t, "global pool");
-        runInThreads(testTlsPool, count, t, "tls pool");
+        runInThreads(testNewDelete, count * t, t, "new/delete");
+        runInThreads(testTlsPool, count * t, t, "tls pool");
     }
 
-    std::cout << "Å×½ºÆ® ¿Ï·á. ÆÄÀÏ ÀÛ¼ºÁß...\n";
+    std::cout << "í…ŒìŠ¤íŠ¸ ì™„ë£Œ. íŒŒì¼ ì‘ì„±ì¤‘...\n";
 
     ProfileDataOutTextMultiThread(L"profile_data.txt");
 
-    std::cout << "ÆÄÀÏ ÀÛ¼º ¿Ï·á\n";
+    std::cout << "íŒŒì¼ ì‘ì„± ì™„ë£Œ\n";
 
     return 0;
 }

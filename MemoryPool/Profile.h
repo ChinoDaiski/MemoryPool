@@ -1,6 +1,7 @@
 
 #pragma once
 
+#define NOMINMAX
 #include <iostream>
 #include <Windows.h>
 
@@ -8,8 +9,9 @@
 #include <string>
 
 #include <fstream>
-#include <float.h> // DBL_MAX, DBL_MIN
-#include <iomanip>
+#include <iomanip>      // setw, setprecision
+#include <cfloat>       // DBL_MAX, DBL_MIN
+#include <algorithm>    // std::min, std::max
 
 class CProfileTimer
 {
@@ -35,7 +37,7 @@ private:
 };
 
 // 프로파일링용 구조체
-#define THRESHOLD 10
+#define THRESHOLD 20
 
 typedef struct _tagProfileData {
     std::wstring name;

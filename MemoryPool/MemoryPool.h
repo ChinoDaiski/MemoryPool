@@ -146,7 +146,7 @@ public:
     UINT32 GetCurPoolCount(void) { return InterlockedCompareExchange(&m_curPoolCount, 0, 0); }
     UINT32 GetMaxPoolCount(void) { return InterlockedCompareExchange(&m_maxPoolCount, 0, 0); }
 
-private:
+public:
     //Node<T>* m_freeNode;
     UINT32 m_curPoolCount; // 풀에서 사용하는 노드 갯수, Alloc되면 1 감소, Free되면 1 증가
     UINT32 m_maxPoolCount; // 풀에서 사용하는 최대 노드 갯수
@@ -384,7 +384,7 @@ public:
     UINT32 GetCurPoolCount(void) { return InterlockedCompareExchange(&m_curPoolCount, 0, 0); }
     UINT32 GetMaxPoolCount(void) { return InterlockedCompareExchange(&m_maxPoolCount, 0, 0); }
 
-private:
+public:
     //tlsNode<T>* m_freeNode;
     UINT32 m_curPoolCount; // 풀에서 사용하는 노드 갯수, Alloc되면 1 감소, Free되면 1 증가
     UINT32 m_maxPoolCount; // 풀에서 사용하는 최대 노드 갯수

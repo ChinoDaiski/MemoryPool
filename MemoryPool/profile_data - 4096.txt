@@ -1,0 +1,32 @@
+Name                     |      Average |    Calls |        Total
+-----------------------------------------------------------------
+1 threads new20000       |     0.000005 |    20000 |     0.104606
+1 threads delete20000    |     0.000001 |    20000 |     0.029911
+1 threads memoryPool Alloc20000 |     0.000002 |    20000 |     0.034294
+1 threads memoryPool Free20000 |     0.000000 |    20000 |     0.001615
+1 threads tlsPool Alloc20000 |     0.000002 |    20000 |     0.034811
+1 threads tlsPool Free20000 |     0.000000 |    20000 |     0.001980
+2 threads new20000       |     0.000007 |    40000 |     0.264889
+2 threads delete20000    |     0.000003 |    40000 |     0.117250
+2 threads tlsPool Alloc20000 |     0.000002 |    40000 |     0.099026
+2 threads tlsPool Free20000 |     0.000000 |    40000 |     0.003385
+2 threads memoryPool Alloc20000 |     0.000002 |    40000 |     0.095806
+2 threads memoryPool Free20000 |     0.000000 |    40000 |     0.004891
+4 threads new20000       |     0.000009 |    80000 |     0.704615
+4 threads delete20000    |     0.000006 |    80000 |     0.467553
+4 threads tlsPool Alloc20000 |     0.000005 |    80000 |     0.390692
+4 threads tlsPool Free20000 |     0.000000 |    80000 |     0.014435
+4 threads memoryPool Alloc20000 |     0.000005 |    80000 |     0.395857
+4 threads memoryPool Free20000 |     0.000000 |    80000 |     0.028880
+8 threads new20000       |     0.000015 |   160000 |     2.384367
+8 threads delete20000    |     0.000012 |   160000 |     1.935553
+8 threads tlsPool Alloc20000 |     0.000010 |   160000 |     1.532053
+8 threads tlsPool Free20000 |     0.000000 |   160000 |     0.058102
+8 threads memoryPool Alloc20000 |     0.000010 |   160000 |     1.552906
+8 threads memoryPool Free20000 |     0.000001 |   160000 |     0.096766
+16 threads new20000      |     0.000027 |   320000 |     8.657364
+16 threads delete20000   |     0.000037 |   320000 |    11.775820
+16 threads tlsPool Alloc20000 |     0.000014 |   320000 |     4.594016
+16 threads tlsPool Free20000 |     0.000001 |   320000 |     0.282467
+16 threads memoryPool Alloc20000 |     0.000018 |   320000 |     5.790229
+16 threads memoryPool Free20000 |     0.000001 |   320000 |     0.388004

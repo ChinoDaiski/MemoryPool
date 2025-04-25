@@ -10,6 +10,8 @@
 #include "Profile.h"
 #include <string>
 
+#define REPEAT_COUNT 200
+
 // 간단한 테스트 구조체
 struct Foo {
     int x[512];
@@ -19,13 +21,13 @@ struct Foo {
 typedef void (*TestFunc)(size_t, int);
 
 //MemoryPool<Foo, true> tlsPool(200000);                        // 전역 풀 인스턴스
-thread_local tlsMemoryPool<Foo, true> tlsPool(200000);      // TLS 풀: 각 스레드별로 독립 인스턴스
+thread_local tlsMemoryPool<Foo, false> tlsPool(200000);      // TLS 풀: 각 스레드별로 독립 인스턴스
 
 // 1) new/delete 테스트
 void testNewDelete(size_t count, int threadCnt) {
-    std::vector<Foo*> v[100];
+    std::vector<Foo*> v[REPEAT_COUNT];
 
-    for (int i = 0; i < 100; ++i)
+    for (int i = 0; i < REPEAT_COUNT; ++i)
     {
         v[i].reserve(count);
     }
@@ -43,7 +45,7 @@ void testNewDelete(size_t count, int threadCnt) {
 
     auto start = std::chrono::high_resolution_clock::now();
 
-    for (int k = 0; k < 100; ++k)
+    for (int k = 0; k < REPEAT_COUNT; ++k)
     {
         Profile pf(alloc);
         for (size_t i = 0; i < count; ++i) {
@@ -51,7 +53,7 @@ void testNewDelete(size_t count, int threadCnt) {
         }
     }
 
-    for (int k = 0; k < 100; ++k)
+    for (int k = 0; k < REPEAT_COUNT; ++k)
     {
         Profile pf(free);
         for (Foo* p : v[k]) {
@@ -114,9 +116,9 @@ void testNewDelete(size_t count, int threadCnt) {
 
 // 3) TLS 풀 테스트
 void testTlsPool(size_t count, int threadCnt) {
-    std::vector<Foo*> v[100];
+    std::vector<Foo*> v[REPEAT_COUNT];
 
-    for (int k = 0; k < 100; ++k)
+    for (int k = 0; k < REPEAT_COUNT; ++k)
     {
         v[k].reserve(count);
 
@@ -145,7 +147,7 @@ void testTlsPool(size_t count, int threadCnt) {
 
     auto start = std::chrono::high_resolution_clock::now();
 
-    for (int k = 0; k < 100; ++k)
+    for (int k = 0; k < REPEAT_COUNT; ++k)
     {
         Profile pf(alloc);
         for (size_t i = 0; i < count; ++i) {
@@ -153,7 +155,7 @@ void testTlsPool(size_t count, int threadCnt) {
         }
     }
 
-    for (int k = 0; k < 100; ++k)
+    for (int k = 0; k < REPEAT_COUNT; ++k)
     {
         {
             Profile pf(free);

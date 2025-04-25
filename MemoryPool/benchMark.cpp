@@ -10,7 +10,7 @@
 #include "Profile.h"
 #include <string>
 
-#define REPEAT_COUNT 200
+#define REPEAT_COUNT 300
 
 // 간단한 테스트 구조체
 struct Foo {
@@ -192,7 +192,7 @@ void runInThreads(TestFunc fn, size_t total, int threads, const char* name) {
 int main() {
     ProfileReset();
 
-    const size_t count = 1000;
+    const size_t count = 500;
 
     std::cout << "--- Single-thread benchmark ---\n";
     testNewDelete(count, 1);
